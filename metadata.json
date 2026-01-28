@@ -1,0 +1,5 @@
+{
+  "name": "Sprite Sheet Animator Pro",
+  "description": "A professional-grade React tool to convert 8x7 magenta-background sprite sheets into smooth, interactive character animations with real-time chroma keying.",
+  "requestFramePermissions": []
+}
