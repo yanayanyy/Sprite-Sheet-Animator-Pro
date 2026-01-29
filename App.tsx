@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SpriteAnimator } from './components/SpriteAnimator';
 import { Generator } from './components/Generator';
 import { SettingsModal } from './components/SettingsModal';
-import { AnimationRow, ANIMATION_LABELS, SpriteConfig, GenModel } from './types';
+import { AnimationRow, ANIMATION_LABELS, SpriteConfig, ModelConfig } from './types';
 
 const DEFAULT_CONFIG: SpriteConfig & { padding: number; characterScale: number } = {
   columns: 8,
@@ -24,8 +24,16 @@ export default function App() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [showSheet, setShowSheet] = useState(false);
   const [bgType, setBgType] = useState<'checkboard' | 'dark' | 'light'>('checkboard');
-  const [selectedModel, setSelectedModel] = useState<GenModel>('gemini-3-pro-image-preview');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  const [modelConfig, setModelConfig] = useState<ModelConfig>(() => {
+    const saved = localStorage.getItem('paimon_model_config');
+    return saved ? JSON.parse(saved) : { type: 'gemini-3-pro-image-preview' };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('paimon_model_config', JSON.stringify(modelConfig));
+  }, [modelConfig]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -59,8 +67,8 @@ export default function App() {
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
-        selectedModel={selectedModel}
-        onSelectModel={setSelectedModel}
+        config={modelConfig}
+        onUpdateConfig={setModelConfig}
       />
 
       <div className="max-w-7xl mx-auto w-full flex-grow">
@@ -94,7 +102,6 @@ export default function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* SIDEBAR: Controls */}
           <aside className="lg:col-span-4 space-y-6">
             <header className="p-2 mb-4">
               <h1 className="text-4xl font-black italic bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent uppercase tracking-tighter leading-none">
@@ -173,12 +180,16 @@ export default function App() {
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700"></div>
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]"></span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${modelConfig.type === 'custom' ? 'bg-emerald-500' : (modelConfig.type.includes('pro') ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' : 'bg-pink-500 shadow-[0_0_8px_#ec4899]')}`}></span>
                       Active Configuration
                     </label>
                     <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
-                       <p className="text-[11px] font-black text-indigo-400 uppercase mb-1">{selectedModel === 'gemini-3-pro-image-preview' ? 'Pro Engine' : 'Flash Engine'}</p>
-                       <p className="text-[9px] text-slate-500 italic">Optimized for {selectedModel === 'gemini-3-pro-image-preview' ? '2K Master Sheets' : 'Rapid 1K Iterations'}.</p>
+                       <p className="text-[11px] font-black text-indigo-400 uppercase mb-1">
+                         {modelConfig.type === 'custom' ? (modelConfig.customModelName || 'Custom Model') : (modelConfig.type.includes('pro') ? 'Pro Engine' : 'Flash Engine')}
+                       </p>
+                       <p className="text-[9px] text-slate-500 italic">
+                         {modelConfig.type === 'custom' ? `Endpoint: ${modelConfig.customUrl || 'Not set'}` : `Optimized for ${modelConfig.type.includes('pro') ? '2K Master Sheets' : 'Rapid 1K Iterations'}.`}
+                       </p>
                     </div>
                     <ul className="text-[11px] text-slate-400 space-y-3 font-medium">
                       <li className="flex gap-2"><span className="text-indigo-500">●</span> 8 columns x 7 rows grid</li>
@@ -190,12 +201,11 @@ export default function App() {
             )}
           </aside>
 
-          {/* MAIN: Content Area */}
           <main className="lg:col-span-8">
             {activeView === 'generator' ? (
               <Generator 
                 onImageGenerated={handleGeneratedImage} 
-                selectedModel={selectedModel}
+                modelConfig={modelConfig}
                 onOpenSettings={() => setIsSettingsOpen(true)}
               />
             ) : (

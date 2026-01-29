@@ -27,19 +27,32 @@ export interface SpriteConfig {
   threshold: number;
 }
 
-export type GenModel = 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image';
+export type GenModel = 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image' | 'custom';
 
-export const MODEL_DETAILS = {
+export interface ModelConfig {
+  type: GenModel;
+  customUrl?: string;
+  customApiKey?: string;
+  customModelName?: string;
+}
+
+export const MODEL_DETAILS: Record<GenModel, { name: string; desc: string; badge: string; accent: string }> = {
   'gemini-3-pro-image-preview': {
-    name: 'Pro Rendering Engine',
-    desc: 'Highest fidelity 2K sprites. Requires paid API key.',
+    name: 'Gemini 3 Pro',
+    desc: 'Highest fidelity 2K sprites. Requires Gemini API key.',
     badge: 'HQ',
     accent: 'indigo'
   },
   'gemini-2.5-flash-image': {
-    name: 'Flash Logic Engine',
+    name: 'Gemini 2.5 Flash',
     desc: 'Fast, efficient 1K sprites. Standard key required.',
     badge: 'FAST',
     accent: 'pink'
+  },
+  'custom': {
+    name: 'Custom Provider',
+    desc: 'Use your own API endpoint (OpenAI, Local, etc.)',
+    badge: 'DIY',
+    accent: 'emerald'
   }
 };

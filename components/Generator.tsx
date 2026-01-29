@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { GenModel } from '../types';
+import { ModelConfig } from '../types';
 
 interface GeneratorProps {
   onImageGenerated: (base64: string) => void;
-  selectedModel: GenModel;
+  modelConfig: ModelConfig;
   onOpenSettings: () => void;
 }
 
@@ -41,7 +41,7 @@ const PROMPT_TEMPLATE = (charName: string) => `请生成一张精灵图（sprite
 风格：可爱、干净、3D 风格（例如 3D 卡通渲染 / 轻拟真），统一光照与配色，背景保持纯品红色（方便抠图）
 输出：只输出这张 sprite sheet（png/jpg）`;
 
-export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, selectedModel, onOpenSettings }) => {
+export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelConfig, onOpenSettings }) => {
   const [charName, setCharName] = useState("一只可爱的小蓝龙，圆滚滚的，大眼睛");
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -50,54 +50,82 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, selected
   const [showConfigHint, setShowConfigHint] = useState(false);
 
   const handleGenerate = async () => {
-    // Check for API key first
-    const hasKey = await window.aistudio.hasSelectedApiKey();
-    if (!hasKey) {
-      setShowConfigHint(true);
-      return;
+    if (modelConfig.type === 'custom') {
+      if (!modelConfig.customUrl || !modelConfig.customApiKey || !modelConfig.customModelName) {
+        setShowConfigHint(true);
+        return;
+      }
+    } else {
+      const hasKey = await window.aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        setShowConfigHint(true);
+        return;
+      }
     }
 
     setIsGenerating(true);
     setError(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      const response = await ai.models.generateContent({
-        model: selectedModel,
-        contents: {
-          parts: [{ text: PROMPT_TEMPLATE(charName) }],
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "4:3",
-            imageSize: selectedModel === 'gemini-3-pro-image-preview' ? "2K" : "1K"
+      if (modelConfig.type === 'custom') {
+        const response = await fetch(`${modelConfig.customUrl}/images/generations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${modelConfig.customApiKey}`
+          },
+          body: JSON.stringify({
+            model: modelConfig.customModelName,
+            prompt: PROMPT_TEMPLATE(charName),
+            n: 1,
+            size: "1024x1024", // Standard size fallback for custom APIs
+            response_format: "b64_json"
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error?.message || "Custom API request failed.");
+        }
+
+        const data = await response.json();
+        if (data.data?.[0]?.b64_json) {
+          setResultImage(`data:image/png;base64,${data.data[0].b64_json}`);
+        } else if (data.data?.[0]?.url) {
+          setResultImage(data.data[0].url);
+        } else {
+          throw new Error("No image data returned from custom endpoint.");
+        }
+      } else {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const response = await ai.models.generateContent({
+          model: modelConfig.type,
+          contents: {
+            parts: [{ text: PROMPT_TEMPLATE(charName) }],
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: "4:3",
+              imageSize: modelConfig.type.includes('pro') ? "2K" : "1K"
+            }
+          }
+        });
+
+        let foundImage = false;
+        if (response.candidates && response.candidates.length > 0) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+              const base64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+              setResultImage(base64);
+              foundImage = true;
+              break;
+            }
           }
         }
-      });
-
-      let foundImage = false;
-      if (response.candidates && response.candidates.length > 0) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData) {
-            const base64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            setResultImage(base64);
-            foundImage = true;
-            break;
-          }
-        }
-      }
-
-      if (!foundImage) {
-        throw new Error("No image was generated. Please try a different character description.");
+        if (!foundImage) throw new Error("No image was generated. Please try again.");
       }
     } catch (err: any) {
-      console.error("Image generation error:", err);
-      if (err.message?.includes('Requested entity was not found')) {
-        setError("API Key verification failed. Please check your billing settings.");
-        setShowConfigHint(true);
-      } else {
-        setError(err.message || "An unexpected error occurred during generation.");
-      }
+      console.error("Generation error:", err);
+      setError(err.message || "An unexpected error occurred during generation.");
     } finally {
       setIsGenerating(false);
     }
@@ -106,21 +134,25 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, selected
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="bg-slate-900/40 border border-white/5 p-8 rounded-[3rem] backdrop-blur-3xl shadow-2xl space-y-6 relative overflow-hidden">
-        {/* API Config Hint Overlay */}
         {showConfigHint && (
           <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-8 animate-in fade-in duration-300">
             <div className="text-center space-y-4 max-w-xs">
               <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto text-amber-500">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               </div>
-              <h4 className="text-sm font-black uppercase text-white tracking-widest">Auth Required</h4>
-              <p className="text-[10px] text-slate-400 leading-relaxed">To utilize the <strong>{selectedModel}</strong>, you must configure a valid API key with billing enabled.</p>
+              <h4 className="text-sm font-black uppercase text-white tracking-widest">Config Required</h4>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                {modelConfig.type === 'custom' 
+                  ? "Custom parameters (URL, Key, Model) are incomplete."
+                  : `Please select a valid Gemini API key for ${modelConfig.type}.`
+                }
+              </p>
               <div className="flex flex-col gap-2 pt-2">
                 <button 
                   onClick={() => { setShowConfigHint(false); onOpenSettings(); }}
                   className="w-full py-3 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all"
                 >
-                  Configure Key
+                  Go to Settings
                 </button>
                 <button 
                   onClick={() => setShowConfigHint(false)}
@@ -136,8 +168,8 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, selected
         <div className="space-y-4">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${selectedModel.includes('pro') ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' : 'bg-pink-500 shadow-[0_0_8px_#ec4899]'}`}></span>
-              {selectedModel === 'gemini-3-pro-image-preview' ? 'Nano Banana Pro' : 'Nano Banana Flash'}
+              <span className={`w-1.5 h-1.5 rounded-full ${modelConfig.type === 'custom' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : (modelConfig.type.includes('pro') ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' : 'bg-pink-500 shadow-[0_0_8px_#ec4899]')}`}></span>
+              {modelConfig.type === 'custom' ? `Custom: ${modelConfig.customModelName || 'Unnamed'}` : (modelConfig.type.includes('pro') ? 'Nano Banana Pro' : 'Nano Banana Flash')}
             </div>
             <button 
               onClick={() => setShowPromptTemplate(!showPromptTemplate)}
@@ -208,11 +240,11 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, selected
               onClick={() => onImageGenerated(resultImage)}
               className="px-8 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-pink-500/30 active:scale-95 flex items-center gap-2"
             >
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
               Animate Character
             </button>
           </div>
-          <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 ring-12 ring-black/30 group cursor-crosshair">
+          <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 ring-12 ring-black/30 group cursor-crosshair bg-slate-950">
             <img src={resultImage} alt="Generated Sprite Sheet" className="w-full h-auto transition-transform duration-1000 group-hover:scale-[1.02]" />
           </div>
         </div>
