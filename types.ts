@@ -26,3 +26,20 @@ export interface SpriteConfig {
   chromaKey: string;
   threshold: number;
 }
+
+export type GenModel = 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image';
+
+export const MODEL_DETAILS = {
+  'gemini-3-pro-image-preview': {
+    name: 'Pro Rendering Engine',
+    desc: 'Highest fidelity 2K sprites. Requires paid API key.',
+    badge: 'HQ',
+    accent: 'indigo'
+  },
+  'gemini-2.5-flash-image': {
+    name: 'Flash Logic Engine',
+    desc: 'Fast, efficient 1K sprites. Standard key required.',
+    badge: 'FAST',
+    accent: 'pink'
+  }
+};
