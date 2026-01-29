@@ -1,4 +1,4 @@
-# Paimon Studio Pro: AI Sprite Engine
+# Sprite Sheet Animator Pro: AI Sprite Engine
 > A professional-grade toolkit for generating and animating 8x7 AI sprite sheets.
 
 [English](#english-guide) | [中文说明](#中文使用指南)
@@ -8,7 +8,7 @@
 <a name="english-guide"></a>
 
 ## 🌟 Overview
-**Paimon Studio Pro** is a high-performance React application designed for game developers and artists. It leverages Gemini's vision models (and custom providers) to generate perfectly aligned 8x7 sprite sheets and provides a real-time chroma-key animator to preview your characters instantly.
+**Sprite Sheet Animator Pro** is a high-performance React application designed for game developers and artists. It leverages Gemini's vision models (and custom providers) to generate perfectly aligned 8x7 sprite sheets and provides a real-time chroma-key animator to preview your characters instantly.
 
 ## 🚀 Key Features
 - **AI Sprite Generator**: Generate consistent character animations with specialized prompts.
@@ -20,7 +20,7 @@
 ## 📖 Usage Guide
 
 ### 1. Configuration (First Step)
-Unlike other tools, Paimon Studio does not nag you for a key on startup.
+Unlike other tools, Sprite Sheet Animator Pro does not nag you for a key on startup.
 - Click the **Gear Icon** in the header to open **Engine Config**.
 - **Gemini Users**: Click "Configure Gemini Key" to select your Google AI Studio project key.
 - **Custom Users**: Select "Custom Provider" and enter your Base URL (e.g., `https://api.openai.com/v1`), API Key, and Model ID.
@@ -53,7 +53,7 @@ For the best results with manual uploads:
 ## 🏮 中文使用指南
 
 ## 🌟 项目概览
-**Paimon Studio Pro** 是一款专为游戏开发者和艺术家设计的高性能工具。它利用 Gemini 视觉模型（及自定义供应商）生成完美对齐的 8x7 精灵图，并提供实时色度键（Chroma Key）动画器，让您可以立即预览角色效果。
+**Sprite Sheet Animator Pro** 是一款专为游戏开发者和艺术家设计的高性能工具。它利用 Gemini 视觉模型（及自定义供应商）生成完美对齐的 8x7 精灵图，并提供实时色度键（Chroma Key）动画器，让您可以立即预览角色效果。
 
 ## 🚀 核心特性
 - **AI 精灵图生成**: 使用专业提示词逻辑生成连贯的角色动画。
@@ -92,4 +92,4 @@ For the best results with manual uploads:
 - **格式**: 推荐 PNG (低噪点) 或 JPG。
 
 ---
-*© 2025 Paimon Studio • Powered by Gemini AI*
+*© 2025 Sprite Sheet Animator Pro • Powered by Gemini AI*

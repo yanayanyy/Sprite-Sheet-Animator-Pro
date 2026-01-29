@@ -105,7 +105,7 @@ export default function App() {
           <aside className="lg:col-span-4 space-y-6">
             <header className="p-2 mb-4">
               <h1 className="text-4xl font-black italic bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent uppercase tracking-tighter leading-none">
-                Paimon<br/>Studio
+                Animator<br/>Pro
               </h1>
               <p className="text-[10px] text-slate-600 font-bold tracking-[0.4em] uppercase mt-3 opacity-60">Engine Selection Active</p>
             </header>
@@ -125,7 +125,7 @@ export default function App() {
                       <div className="text-slate-600 group-hover/upload:text-pink-400 transition-colors">
                         <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                      <p className="text-[11px] font-bold text-slate-500 group-hover/upload:text-slate-300">Drop Paimon Sheet Here</p>
+                      <p className="text-[11px] font-bold text-slate-500 group-hover/upload:text-slate-300">Drop Sprite Sheet Here</p>
                     </div>
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export default function App() {
       </div>
       
       <footer className="max-w-7xl mx-auto w-full pt-12 pb-6 border-t border-white/5 mt-8 flex justify-between items-center opacity-40">
-        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">© 2025 Paimon Studio • AI Sprite Engine</p>
+        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">© 2025 Sprite Sheet Animator Pro • AI Sprite Engine</p>
         <div className="flex gap-4">
            <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
