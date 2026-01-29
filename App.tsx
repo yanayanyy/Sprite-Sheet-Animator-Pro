@@ -27,12 +27,12 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   const [modelConfig, setModelConfig] = useState<ModelConfig>(() => {
-    const saved = localStorage.getItem('paimon_model_config');
+    const saved = localStorage.getItem('sprite_animator_pro_model_config');
     return saved ? JSON.parse(saved) : { type: 'gemini-3-pro-image-preview' };
   });
 
   useEffect(() => {
-    localStorage.setItem('paimon_model_config', JSON.stringify(modelConfig));
+    localStorage.setItem('sprite_animator_pro_model_config', JSON.stringify(modelConfig));
   }, [modelConfig]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +185,7 @@ export default function App() {
                     </label>
                     <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
                        <p className="text-[11px] font-black text-indigo-400 uppercase mb-1">
+                         {/* Fix: replaced undefined localConfig with modelConfig */}
                          {modelConfig.type === 'custom' ? (modelConfig.customModelName || 'Custom Model') : (modelConfig.type.includes('pro') ? 'Pro Engine' : 'Flash Engine')}
                        </p>
                        <p className="text-[9px] text-slate-500 italic">

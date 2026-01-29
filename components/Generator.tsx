@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { ModelConfig } from '../types';
+import { ModelConfig, MODEL_DETAILS } from '../types';
 
 interface GeneratorProps {
   onImageGenerated: (base64: string) => void;
@@ -49,6 +49,8 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
   const [showPromptTemplate, setShowPromptTemplate] = useState(false);
   const [showConfigHint, setShowConfigHint] = useState(false);
 
+  const currentModelDetails = MODEL_DETAILS[modelConfig.type];
+
   const handleGenerate = async () => {
     if (modelConfig.type === 'custom') {
       if (!modelConfig.customUrl || !modelConfig.customApiKey || !modelConfig.customModelName) {
@@ -77,7 +79,7 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
             model: modelConfig.customModelName,
             prompt: PROMPT_TEMPLATE(charName),
             n: 1,
-            size: "1024x1024", // Standard size fallback for custom APIs
+            size: "1024x1024", 
             response_format: "b64_json"
           })
         });
@@ -96,6 +98,7 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
           throw new Error("No image data returned from custom endpoint.");
         }
       } else {
+        // Create a new instance right before the call to pick up the most recent key
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
           model: modelConfig.type,
@@ -105,7 +108,8 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
           config: {
             imageConfig: {
               aspectRatio: "4:3",
-              imageSize: modelConfig.type.includes('pro') ? "2K" : "1K"
+              // imageSize is only supported for gemini-3-pro-image-preview
+              ...(modelConfig.type === 'gemini-3-pro-image-preview' ? { imageSize: "2K" } : {})
             }
           }
         });
@@ -125,6 +129,10 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
       }
     } catch (err: any) {
       console.error("Generation error:", err);
+      // If the request fails due to missing setup/billing, trigger the key selection dialog hint
+      if (err.message?.includes("Requested entity was not found")) {
+        setShowConfigHint(true);
+      }
       setError(err.message || "An unexpected error occurred during generation.");
     } finally {
       setIsGenerating(false);
@@ -144,7 +152,7 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
               <p className="text-[10px] text-slate-400 leading-relaxed">
                 {modelConfig.type === 'custom' 
                   ? "Custom parameters (URL, Key, Model) are incomplete."
-                  : `Please select a valid Gemini API key for ${modelConfig.type}.`
+                  : `Please select a valid Gemini API key for ${currentModelDetails.name}.`
                 }
               </p>
               <div className="flex flex-col gap-2 pt-2">
@@ -169,7 +177,7 @@ export const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, modelCon
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={`w-1.5 h-1.5 rounded-full ${modelConfig.type === 'custom' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : (modelConfig.type.includes('pro') ? 'bg-indigo-500 shadow-[0_0_8px_#6366f1]' : 'bg-pink-500 shadow-[0_0_8px_#ec4899]')}`}></span>
-              {modelConfig.type === 'custom' ? `Custom: ${modelConfig.customModelName || 'Unnamed'}` : (modelConfig.type.includes('pro') ? 'Nano Banana Pro' : 'Nano Banana Flash')}
+              {modelConfig.type === 'custom' ? `${currentModelDetails.name}: ${modelConfig.customModelName || 'Unnamed'}` : currentModelDetails.name}
             </div>
             <button 
               onClick={() => setShowPromptTemplate(!showPromptTemplate)}
